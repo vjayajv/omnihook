@@ -71,7 +71,7 @@ func runHooks(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(activeHooks) == 0 {
-		fmt.Println("No active %s hooks found.", hookType)
+		fmt.Printf("No active %s hooks found.\n", hookType)
 		return nil
 	}
 

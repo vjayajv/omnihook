@@ -42,7 +42,7 @@ brews:
       bin.install "omnihook"
     repository:
       owner: vjayajv
-      name: homebrew-omnihook
+      name: omnihook
 
 nfpms:
   - package_name: omnihook

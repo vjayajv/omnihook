@@ -126,9 +126,9 @@ fi`
 	hookType := filepath.Base(hookPath)
 	var omnihookCmd string
 	if hookType == "commit-msg" {
-		omnihookCmd = "commitmsgfile=$1\n\tcommitmsg=$(cat $commitmsgfile)\n\tomnihook run --commit-msg \"$commitmsg\" --hook-type " + hookType
+		omnihookCmd = "commitmsgfile=$1\n\tcommitmsg=$(cat $commitmsgfile)\n\tomnihook run --commit-msg \"$commitmsg\" --type " + hookType
 	} else {
-		omnihookCmd = "omnihook run --hook-type " + hookType
+		omnihookCmd = "omnihook run --type " + hookType
 	}
 
 	content := fmt.Sprintf(templateContent, omnihookCmd, hookType, hookType)

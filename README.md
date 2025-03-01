@@ -11,11 +11,6 @@ OmniHook is a global Git hook manager that allows you to easily install and mana
 
 ## Installation
 
-### Using Homebrew (macOS & Linux)
-```sh
-brew install vjayajv/tap/omnihook
-```
-
 ### Using Go
 ```sh
 go install github.com/vjayajv/omnihook@latest

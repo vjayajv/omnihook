@@ -47,12 +47,12 @@ omnihook install --file /path/to/hook.yml
 
 ### Enable a Hook
 ```sh
-omnihook enable <hook-id>
+omnihook enable --id <hook-id> --type <hook-type>
 ```
 
 ### Disable a Hook
 ```sh
-omnihook disable <hook-id>
+omnihook disable --id <hook-id> --type <hook-type>
 ```
 
 ### Update Installed Hooks
@@ -62,17 +62,17 @@ omnihook update
 
 ### List Installed Hooks
 ```sh
-omnihook list
+omnihook list --all | --type <hook-type>
 ```
 
 ### Uninstall a Hook
 ```sh
-omnihook uninstall <hook-id>
+omnihook uninstall --all | --type <hook-type> | --id <hook-id> --type <hook-type>
 ```
 
 ### Run Hooks Manually
 ```sh
-omnihook run
+omnihook run --type <hook-type> 
 ```
 
 ## Example Hook Configuration (`hook.yml`)
@@ -84,6 +84,7 @@ script: |
   #!/bin/sh
   echo "Running linter..."
   eslint .
+hookType: "pre-commit"
 ```
 
 ## Contributing

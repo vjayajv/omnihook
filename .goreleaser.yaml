@@ -1,0 +1,55 @@
+version: 2
+
+project_name: omnihook
+
+builds:
+  - id: omnihook
+    main: ./main.go
+    binary: omnihook
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - format_overrides:
+      - goos: windows
+        formats: [ 'zip' ]
+      - goos: darwin
+        formats: [ 'tar.gz' ]
+      - goos: linux
+        formats: [ 'tar.gz' ]
+
+    files:
+      - README.md
+      - LICENSE
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+brews:
+  - name: omnihook
+    homepage: "https://github.com/vjayajv/omnihook"
+    description: "Global Git Hook Manager"
+    install: |
+      bin.install "omnihook"
+    repository:
+      owner: vjayajv
+      name: homebrew-omnihook
+
+nfpms:
+  - package_name: omnihook
+    vendor: "vjayajv"
+    homepage: "https://github.com/vjayajv/omnihook"
+    license: "MIT"
+    maintainer: "vjayajv"
+    formats:
+      - deb
+      - rpm

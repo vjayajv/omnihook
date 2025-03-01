@@ -1,40 +1,45 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-
-*/
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-// disableCmd represents the disable command
 var disableCmd = &cobra.Command{
-	Use:   "disable",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("disable called")
-	},
+	Use:   "disable --id <hook_id>",
+	Short: "Disable a specified hook",
+	RunE:  disableHook,
 }
 
 func init() {
 	rootCmd.AddCommand(disableCmd)
+	disableCmd.Flags().String("id", "", "ID of the hook to disable")
+	disableCmd.MarkFlagRequired("id")
+}
 
-	// Here you will define your flags and configuration settings.
+func disableHook(cmd *cobra.Command, args []string) error {
+	hooksDir := viper.GetString("omni_hooks_dir")
+	if hooksDir == "" {
+		return errors.New("hooks directory not set. Run 'omnihook configure' first")
+	}
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// disableCmd.PersistentFlags().String("foo", "", "A help for foo")
+	hookID, _ := cmd.Flags().GetString("id")
+	hookPath := filepath.Join(hooksDir, hookID)
+	disabledHookPath := hookPath + ".disabled"
 
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// disableCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	if _, err := os.Stat(hookPath); os.IsNotExist(err) {
+		return fmt.Errorf("hook '%s' not found", hookID)
+	}
+
+	if err := os.Rename(hookPath, disabledHookPath); err != nil {
+		return fmt.Errorf("failed to disable hook '%s': %w", hookID, err)
+	}
+
+	fmt.Printf("Hook '%s' has been disabled.\n", hookID)
+	return nil
 }

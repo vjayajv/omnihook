@@ -1,40 +1,53 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-
-*/
 package cmd
 
 import (
+	"errors"
 	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
-// updateCmd represents the update command
+type Cache struct {
+	Sources []string `yaml:"sources"`
+}
+
 var updateCmd = &cobra.Command{
 	Use:   "update",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("update called")
-	},
+	Short: "Update installed hooks",
+	RunE:  updateHooks,
 }
 
 func init() {
 	rootCmd.AddCommand(updateCmd)
+	updateCmd.Flags().String("url", "", "Update hooks from a specific source URL")
+	updateCmd.Flags().Bool("all", false, "Update all sources")
+}
 
-	// Here you will define your flags and configuration settings.
+func updateHooks(cmd *cobra.Command, args []string) error {
+	url, _ := cmd.Flags().GetString("url")
+	all, _ := cmd.Flags().GetBool("all")
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// updateCmd.PersistentFlags().String("foo", "", "A help for foo")
+	cache, err := readCache()
+	if err != nil {
+		return err
+	}
 
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// updateCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	if url != "" {
+		return reinstallHooks([]string{url})
+	} else if all || len(args) == 0 {
+		if cache.Sources == nil {
+			return errors.New("no sources to update, use --url instead")
+		}
+		return reinstallHooks(cache.Sources)
+	}
+
+	return errors.New("invalid update parameters")
+}
+
+func reinstallHooks(sources []string) error {
+	for _, src := range sources {
+		fmt.Printf("Updating hooks from: %s\n", src)
+		// Call install logic for each stored source
+		installHook(src, "")
+	}
+	return nil
 }

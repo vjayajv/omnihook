@@ -1,40 +1,51 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-
-*/
 package cmd
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-// enableCmd represents the enable command
 var enableCmd = &cobra.Command{
-	Use:   "enable",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("enable called")
-	},
+	Use:   "enable --id <hook_id>",
+	Short: "Enable a previously disabled hook",
+	RunE:  enableHook,
 }
 
 func init() {
 	rootCmd.AddCommand(enableCmd)
+	enableCmd.Flags().String("id", "", "ID of the hook to enable")
+	enableCmd.MarkFlagRequired("id")
+}
 
-	// Here you will define your flags and configuration settings.
+func enableHook(cmd *cobra.Command, args []string) error {
+	hooksDir := viper.GetString("omni_hooks_dir")
+	if hooksDir == "" {
+		return fmt.Errorf("hooks directory not set. Run 'omnihook configure' first")
+	}
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// enableCmd.PersistentFlags().String("foo", "", "A help for foo")
+	hookID, _ := cmd.Flags().GetString("id")
+	disabledHookPath := filepath.Join(hooksDir, hookID+".disabled")
+	enabledHookPath := filepath.Join(hooksDir, hookID)
 
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// enableCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// Check if the hook is actually disabled
+	if _, err := os.Stat(disabledHookPath); os.IsNotExist(err) {
+		if _, err := os.Stat(enabledHookPath); err == nil {
+			fmt.Printf("Hook '%s' is already enabled.\n", hookID)
+			return nil
+		}
+		return fmt.Errorf("hook '%s' does not exist", hookID)
+	}
+
+	// Rename the disabled hook back to enabled
+	err := os.Rename(disabledHookPath, enabledHookPath)
+	if err != nil {
+		return fmt.Errorf("failed to enable hook '%s': %w", hookID, err)
+	}
+
+	fmt.Printf("Hook '%s' has been enabled.\n", hookID)
+	return nil
 }

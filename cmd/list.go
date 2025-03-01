@@ -106,20 +106,25 @@ func listAllHooks(hooksDir string) {
 		return
 	}
 
-	fmt.Println("Installed hooks:")
+	
+	hookCount := 0
 	for _, dir := range dirs {
 		if dir.IsDir() {
-			fmt.Println("└──", dir.Name())
 			files, err := os.ReadDir(fmt.Sprintf("%s/%s", hooksDir, dir.Name()))
-			if err != nil {
+			if err != nil || len(files) == 0 {
 				continue
 			}
+			hookCount++
+			fmt.Println("└──", dir.Name())
 			for _, file := range files {
 				if !file.IsDir() {
 					fmt.Println("    ├──", file.Name())
 				}
 			}
 		}
+	}
+	if hookCount == 0 {
+		fmt.Println("No hooks installed.")
 	}
 }
 

@@ -11,7 +11,7 @@ import (
 )
 
 var disableCmd = &cobra.Command{
-	Use:   "disable --id <hook_id>",
+	Use:   "disable --id <hook_id> --type <hook_type>",
 	Short: "Disable a specified hook",
 	RunE:  disableHook,
 }
@@ -19,7 +19,9 @@ var disableCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(disableCmd)
 	disableCmd.Flags().String("id", "", "ID of the hook to disable")
+	disableCmd.Flags().String("type", "", "Type of the hook to disable")
 	disableCmd.MarkFlagRequired("id")
+	disableCmd.MarkFlagRequired("type")
 }
 
 func disableHook(cmd *cobra.Command, args []string) error {
@@ -29,9 +31,14 @@ func disableHook(cmd *cobra.Command, args []string) error {
 	}
 
 	hookID, _ := cmd.Flags().GetString("id")
-	hookPath := filepath.Join(hooksDir, hookID)
+	hookType, _ := cmd.Flags().GetString("type")
+	hookPath := filepath.Join(hooksDir, hookType, hookID)
 	disabledHookPath := hookPath + ".disabled"
-
+	
+	if _, err := os.Stat(disabledHookPath); err == nil {
+		fmt.Printf("Hook '%s' is already disabled.\n", hookID)
+		return nil
+	}
 	if _, err := os.Stat(hookPath); os.IsNotExist(err) {
 		return fmt.Errorf("hook '%s' not found", hookID)
 	}

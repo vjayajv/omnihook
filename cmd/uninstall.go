@@ -21,6 +21,7 @@ func init() {
 	rootCmd.AddCommand(uninstallCmd)
 	uninstallCmd.Flags().String("id", "", "ID of the hook to uninstall")
 	uninstallCmd.Flags().Bool("all", false, "Remove all installed hooks")
+	uninstallCmd.Flags().String("type", "", "Remove all installed hooks of a specific type")
 }
 
 func uninstallHook(cmd *cobra.Command, args []string) error {
@@ -29,48 +30,27 @@ func uninstallHook(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("hooks directory not set. Run 'omnihook configure' first")
 	}
 
+	hookType, _ := cmd.Flags().GetString("type")
 	hookID, _ := cmd.Flags().GetString("id")
 	removeAll, _ := cmd.Flags().GetBool("all")
 
-	if !removeAll && hookID == "" {
-		return fmt.Errorf("either --id or --all must be specified")
-	}
-
 	if removeAll {
 		return uninstallAllHooks(hooksDir)
-	} else {
-		return uninstallSingleHook(hooksDir, hookID)
-	}
-}
-
-func uninstallSingleHook(hooksDir, hookID string) error {
-	hookPath := filepath.Join(hooksDir, hookID)
-	disabledHookPath := hookPath + ".disabled"
-
-	// Determine if it's enabled or disabled
-	var targetPath string
-	if _, err := os.Stat(hookPath); err == nil {
-		targetPath = hookPath
-	} else if _, err := os.Stat(disabledHookPath); err == nil {
-		targetPath = disabledHookPath
-	} else {
-		return fmt.Errorf("hook '%s' not found", hookID)
 	}
 
-	// Confirm before deletion
-	if !confirmAction(fmt.Sprintf("Are you sure you want to remove hook '%s'? (y/N): ", hookID)) {
-		fmt.Println("Uninstall cancelled.")
-		return nil
+	if hookID != "" && hookType == "" {
+		return fmt.Errorf("--type is required when --id is specified")
 	}
 
-	// Remove the hook
-	err := os.Remove(targetPath)
-	if err != nil {
-		return fmt.Errorf("failed to remove hook '%s': %w", hookID, err)
+	if hookType == "" && !removeAll {
+		return fmt.Errorf("either --type, --id (with --type), or --all must be specified")
 	}
 
-	fmt.Printf("Hook '%s' has been removed.\n", hookID)
-	return nil
+	if hookID != "" {
+		return uninstallSingleHook(hooksDir, hookType, hookID)
+	}
+
+	return uninstallHookType(hooksDir, hookType)
 }
 
 func uninstallAllHooks(hooksDir string) error {
@@ -92,7 +72,7 @@ func uninstallAllHooks(hooksDir string) error {
 
 	// Remove each hook
 	for _, hookPath := range hookFiles {
-		err := os.Remove(hookPath)
+		err := os.RemoveAll(hookPath)
 		if err != nil {
 			fmt.Printf("Failed to remove hook '%s': %v\n", filepath.Base(hookPath), err)
 		} else {
@@ -101,6 +81,51 @@ func uninstallAllHooks(hooksDir string) error {
 	}
 
 	fmt.Println("All hooks have been removed.")
+	return nil
+}
+
+func uninstallHookType(hooksDir, hookType string) error {
+	typeDir := filepath.Join(hooksDir, hookType)
+	if _, err := os.Stat(typeDir); os.IsNotExist(err) {
+		return fmt.Errorf("hook type directory '%s' not found", hookType)
+	}
+
+	if !confirmAction(fmt.Sprintf("Are you sure you want to remove all hooks of type '%s'? (y/N): ", hookType)) {
+		fmt.Println("Uninstall cancelled.")
+		return nil
+	}
+
+	if err := os.RemoveAll(typeDir); err != nil {
+		return fmt.Errorf("failed to remove hook type directory '%s': %w", hookType, err)
+	}
+
+	fmt.Printf("All hooks of type '%s' have been removed.\n", hookType)
+	return nil
+}
+
+func uninstallSingleHook(hooksDir, hookType, hookID string) error {
+	hookPath := filepath.Join(hooksDir, hookType, hookID)
+	disabledHookPath := hookPath + ".disabled"
+
+	var targetPath string
+	if _, err := os.Stat(hookPath); !os.IsNotExist(err) {
+		targetPath = hookPath
+	} else if _, err := os.Stat(disabledHookPath); !os.IsNotExist(err) {
+		targetPath = disabledHookPath
+	} else {
+		return fmt.Errorf("hook '%s' of type '%s' not found", hookID, hookType)
+	}
+
+	if !confirmAction(fmt.Sprintf("Are you sure you want to remove hook '%s' of type '%s'? (y/N): ", hookID, hookType)) {
+		fmt.Println("Uninstall cancelled.")
+		return nil
+	}
+
+	if err := os.Remove(targetPath); err != nil {
+		return fmt.Errorf("failed to remove hook '%s': %w", hookID, err)
+	}
+
+	fmt.Printf("Hook '%s' of type '%s' has been removed.\n", hookID, hookType)
 	return nil
 }
 

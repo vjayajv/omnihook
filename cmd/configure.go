@@ -34,8 +34,8 @@ func configureOmnihook(reset bool) {
 	configDir := filepath.Join(home, ".omnihook")
 	configFile := filepath.Join(configDir, "config.yaml")
 	hooksDir := filepath.Join(configDir, "hooks")
+	hookTypes := []string{"pre-commit", "prepare-commit-msg", "commit-msg", "pre-push"}
 	gitHooksDir := filepath.Join(home, ".git_hooks")
-	preCommitHookPath := filepath.Join(gitHooksDir, "pre-commit")
 
 	if reset {
 		if err := os.Remove(configFile); err != nil && !os.IsNotExist(err) {
@@ -57,6 +57,15 @@ func configureOmnihook(reset bool) {
 		return
 	}
 
+	// Ensure hooks sub-directories exist
+	for _, hookType := range hookTypes {
+		hookTypeDir := filepath.Join(hooksDir, hookType)
+		if err := os.MkdirAll(hookTypeDir, 0755); err != nil {
+			fmt.Println("Error creating hooks sub-directory:", err)
+			return
+		}
+	}
+
 	// Ensure Git hooks directory exists
 	if err := os.MkdirAll(gitHooksDir, 0755); err != nil {
 		fmt.Println("Error creating Git hooks directory:", err)
@@ -69,10 +78,12 @@ func configureOmnihook(reset bool) {
 		return
 	}
 
-	// Create the pre-commit hook
-	if err := createPreCommitHook(preCommitHookPath); err != nil {
-		fmt.Println("Error creating pre-commit hook:", err)
-		return
+	for _, hookType := range hookTypes {
+		hookPath := filepath.Join(gitHooksDir, hookType)
+		if err := createGlobalHook(hookPath); err != nil {
+			fmt.Println("Error creating global hook: "+hookPath, err)
+			return
+		}
 	}
 
 	// Save config
@@ -91,28 +102,38 @@ func setGitHooksPath(gitHooksDir string) error {
 	return cmd.Run()
 }
 
-func createPreCommitHook(preCommitHookPath string) error {
-	content := `#!/bin/sh
+func createGlobalHook(hookPath string) error {
+	templateContent := `#!/bin/sh
 
 # Call Omnihook to run managed hooks
 if command -v omnihook >/dev/null 2>&1; then
-    omnihook run
-    if [ $? -ne 0 ]; then
-        echo "OmniHook detected an issue. Aborting commit."
-        exit 1
-    fi
+	%s
+	if [ $? -ne 0 ]; then
+		echo "OmniHook detected an issue. Aborting commit."
+		exit 1
+	fi
 fi
 
-# Also run the repo-local pre-commit if it exists
-if [ -f .git/hooks/pre-commit ]; then
-    .git/hooks/pre-commit
-    if [ $? -ne 0 ]; then
-        echo "Repo-local pre-commit hook failed. Aborting commit."
-        exit 1
-    fi
+# Also run the repo-local hook if it exists
+if [ -f .git/hooks/%s ]; then
+	.git/hooks/%s
+	if [ $? -ne 0 ]; then
+		echo "Repo-local hook failed. Aborting commit."
+		exit 1
+	fi
 fi`
 
-	if err := os.WriteFile(preCommitHookPath, []byte(content), 0755); err != nil {
+	hookType := filepath.Base(hookPath)
+	var omnihookCmd string
+	if hookType == "commit-msg" {
+		omnihookCmd = "commitmsgfile=$1\n\tcommitmsg=$(cat $commitmsgfile)\n\tomnihook run --commit-msg \"$commitmsg\" --hook-type " + hookType
+	} else {
+		omnihookCmd = "omnihook run --hook-type " + hookType
+	}
+
+	content := fmt.Sprintf(templateContent, omnihookCmd, hookType, hookType)
+
+	if err := os.WriteFile(hookPath, []byte(content), 0755); err != nil {
 		return err
 	}
 

@@ -2,6 +2,7 @@
 
 OmniHook is a global Git hook manager that allows you to easily install and manage pre-commit, pre-push, and other Git hooks across multiple repositories. It provides a centralized way to enforce best practices and security policies.
 
+
 ## Features
 - Install Git hooks from a remote Git repository or local file.
 - Supports inline scripts as well as external script paths.

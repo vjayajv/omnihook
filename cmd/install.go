@@ -43,6 +43,7 @@ type Hook struct {
 	Description string `yaml:"description"`
 	Script      string `yaml:"script"`
 	ScriptPath  string `yaml:"scriptPath"`
+	HookType    string `yaml:"hookType"`
 }
 
 type OmniHook struct {
@@ -108,7 +109,14 @@ func installHook(url, filePath string) error {
 			return fmt.Errorf("invalid hook configuration: %w", err)
 		}
 
-		hookFilePath := filepath.Join(hooksDir, hook.ID)
+		if hook.HookType == "" {
+			hook.HookType = "pre-commit"
+		}
+		hookTypeDir := filepath.Join(hooksDir, hook.HookType)
+		if err := os.MkdirAll(hookTypeDir, 0755); err != nil {
+			return fmt.Errorf("failed to create hook type directory: %w", err)
+		}
+		hookFilePath := filepath.Join(hookTypeDir, hook.ID)
 		content := fmt.Sprintf("#!/bin/sh\n# %s\n", hook.Description)
 		if hook.Script != "" {
 			content += fmt.Sprintf("%s\n", hook.Script)
@@ -239,6 +247,9 @@ func loadHooksFromFile(filePath string) ([]Hook, error) {
 func validateHook(hook Hook) error {
 	if hook.ID == "" {
 		return errors.New("hook ID is required")
+	}
+	if hook.HookType == "" {
+		hook.HookType = "pre-commit"
 	}
 	if hook.Name == "" {
 		return errors.New("hook name is required")

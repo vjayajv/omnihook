@@ -5,20 +5,20 @@
 class Omnihook < Formula
   desc "Global Git Hook Manager"
   homepage "https://github.com/vjayajv/omnihook"
-  version "1.1.2"
+  version "1.1.3"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/vjayajv/omnihook/releases/download/v1.1.2/omnihook_1.1.2_darwin_amd64.tar.gz"
-      sha256 "d056a037846faca86927771e85333e4fcfe2d13e3de27741e3b95b31f0f12e39"
+      url "https://github.com/vjayajv/omnihook/releases/download/v1.1.3/omnihook_1.1.3_darwin_amd64.tar.gz"
+      sha256 "a0b1f236bcbecf7e2665eb17358686de0d97cf9b7f3ca249311d19905d36a834"
 
       def install
         bin.install "omnihook"
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/vjayajv/omnihook/releases/download/v1.1.2/omnihook_1.1.2_darwin_arm64.tar.gz"
-      sha256 "a8ca7329e9a1c8df7b3eb63d2af5b93fc7fe20c89a67183a2bc3786f56ed6e18"
+      url "https://github.com/vjayajv/omnihook/releases/download/v1.1.3/omnihook_1.1.3_darwin_arm64.tar.gz"
+      sha256 "010b3c15ae025a805ddffe4f90fb7db96ab5af63ba2f41428f18f5f4ce5d7984"
 
       def install
         bin.install "omnihook"
@@ -29,8 +29,8 @@ class Omnihook < Formula
   on_linux do
     if Hardware::CPU.intel?
       if Hardware::CPU.is_64_bit?
-        url "https://github.com/vjayajv/omnihook/releases/download/v1.1.2/omnihook_1.1.2_linux_amd64.tar.gz"
-        sha256 "a7774279ecdca64015157dabd729156b3d37bcc7011048ab1549ce3b79fa780e"
+        url "https://github.com/vjayajv/omnihook/releases/download/v1.1.3/omnihook_1.1.3_linux_amd64.tar.gz"
+        sha256 "b3c8632e42df41ac6a22c380007ca279a92b3016480ee9750aef83c1dd3fd0a7"
 
         def install
           bin.install "omnihook"
@@ -39,8 +39,8 @@ class Omnihook < Formula
     end
     if Hardware::CPU.arm?
       if Hardware::CPU.is_64_bit?
-        url "https://github.com/vjayajv/omnihook/releases/download/v1.1.2/omnihook_1.1.2_linux_arm64.tar.gz"
-        sha256 "ae43c11f3218d784be4102b644a5a355e2a2f1d4ee3bc4c5339b646bebfe2c6c"
+        url "https://github.com/vjayajv/omnihook/releases/download/v1.1.3/omnihook_1.1.3_linux_arm64.tar.gz"
+        sha256 "bad61539ca0de0bd0dbe2e0d1af4e37ca2df400bebecd5670b882c91bf753f97"
 
         def install
           bin.install "omnihook"

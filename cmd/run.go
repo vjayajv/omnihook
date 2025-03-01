@@ -130,10 +130,17 @@ func runHooks(cmd *cobra.Command, args []string) error {
 	close(results)
 
 	fmt.Println()
+	failureCount := 0
 	for result := range results {
 		if result.status == "Failed" {
 			fmt.Printf("\n🚧 %s check failed:\n%s\n\n", gchalk.Bold(result.name), gchalk.Red(result.errorMsg))
+			failureCount++
 		}
+	}
+	
+	if failureCount > 0 {
+		cmd.SilenceUsage = true
+		return errors.New("one or more pre-commit checks failed")
 	}
 
 	return nil

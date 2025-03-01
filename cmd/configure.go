@@ -97,11 +97,19 @@ func createPreCommitHook(preCommitHookPath string) error {
 # Call Omnihook to run managed hooks
 if command -v omnihook >/dev/null 2>&1; then
     omnihook run
+    if [ $? -ne 0 ]; then
+        echo "OmniHook detected an issue. Aborting commit."
+        exit 1
+    fi
 fi
 
 # Also run the repo-local pre-commit if it exists
 if [ -f .git/hooks/pre-commit ]; then
     .git/hooks/pre-commit
+    if [ $? -ne 0 ]; then
+        echo "Repo-local pre-commit hook failed. Aborting commit."
+        exit 1
+    fi
 fi`
 
 	if err := os.WriteFile(preCommitHookPath, []byte(content), 0755); err != nil {

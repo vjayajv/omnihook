@@ -115,6 +115,7 @@ func runHooks(cmd *cobra.Command, args []string) error {
 		go func(hookName, hookPath string) {
 			defer wg.Done()
 
+			bars[hookName].Show()
 			var cmdArgs []string
 			if hookType == "commit-msg" && commitMsg != "" {
 				cmdArgs = append(cmdArgs, commitMsg)
